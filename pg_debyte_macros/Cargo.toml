@@ -12,4 +12,4 @@ keywords = ["postgres", "postgresql", "bytea", "json", "pgrx"]
 categories = ["database", "development-tools"]
 
 [dependencies]
-pg_debyte_core = { path = "../pg_debyte_core" }
+pg_debyte_core = { version = "0.1.0", path = "../pg_debyte_core" }

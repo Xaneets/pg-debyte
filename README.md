@@ -1,5 +1,9 @@
 # pg-debyte
 
+[![Build](https://github.com/Xaneets/pg-debyte/actions/workflows/build.yml/badge.svg)](https://github.com/Xaneets/pg-debyte/actions/workflows/build.yml)
+[![tests](https://github.com/Xaneets/pg-debyte/actions/workflows/tests.yml/badge.svg)](https://github.com/Xaneets/pg-debyte/actions/workflows/tests.yml)
+[![Crates.io](https://img.shields.io/crates/v/pg_debyte_core.svg)](https://crates.io/crates/pg_debyte_core)
+
 Core building blocks for PostgreSQL extensions that decode `bytea` into JSON.
 This repository provides reusable Rust crates plus a small example extension.
 

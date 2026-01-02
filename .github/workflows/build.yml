@@ -1,0 +1,15 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build docker image
+        run: ./scripts/docker-ci-build-image.sh
+      - name: Build workspace packages
+        run: ./scripts/docker-ci-build-workspace.sh

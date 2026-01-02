@@ -11,10 +11,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build docker image
-        run: ./scripts/docker-ci-build-image.sh
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
       - name: Workspace tests (exclude pg_debyte_ext)
-        run: ./scripts/docker-ci-test-workspace.sh
+        run: cargo test --workspace --exclude pg_debyte_ext
   pg-extension-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20

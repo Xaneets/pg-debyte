@@ -1,8 +1,8 @@
 # pg-debyte
 
-[![Build](https://github.com/Xaneets/pg-debyte/actions/workflows/build.yml/badge.svg)](https://github.com/Xaneets/pg-debyte/actions/workflows/build.yml)
-[![Workspace tests](https://github.com/Xaneets/pg-debyte/actions/workflows/core-tests.yml/badge.svg)](https://github.com/Xaneets/pg-debyte/actions/workflows/core-tests.yml)
-[![PG extension tests](https://github.com/Xaneets/pg-debyte/actions/workflows/pg-extension-tests.yml/badge.svg)](https://github.com/Xaneets/pg-debyte/actions/workflows/pg-extension-tests.yml)
+[![Build pg15/pg17](https://github.com/xaneets/pg-debyte/actions/workflows/build.yml/badge.svg?label=build%20pg15%2Fpg17)](https://github.com/xaneets/pg-debyte/actions/workflows/build.yml)
+[![Core tests](https://github.com/xaneets/pg-debyte/actions/workflows/core-tests.yml/badge.svg?label=core%20tests)](https://github.com/xaneets/pg-debyte/actions/workflows/core-tests.yml)
+[![PG extension tests pg15/pg17](https://github.com/xaneets/pg-debyte/actions/workflows/pg-extension-tests.yml/badge.svg?label=pg%20ext%20tests%20pg15%2Fpg17)](https://github.com/xaneets/pg-debyte/actions/workflows/pg-extension-tests.yml)
 [![Crates.io](https://img.shields.io/crates/v/pg_debyte_core.svg)](https://crates.io/crates/pg_debyte_core)
 
 Core building blocks for PostgreSQL extensions that decode `bytea` into JSON.
@@ -12,7 +12,7 @@ This repository provides reusable Rust crates plus a small example extension.
 
 - `pg_debyte_core`: envelope parser, registry, codecs/actions, limits, errors.
 - `pg_debyte_macros`: helper macros for registering typed decoders.
-- `pg_debyte_pgrx`: PG17-only helper glue (GUC limits and decoding helpers).
+- `pg_debyte_pgrx`: PG15/PG17 helper glue (GUC limits and decoding helpers).
 - `pg_debyte_ext`: example PG17 extension crate with a demo registry and decoder.
 - `pg_debyte_tools`: helper binaries (demo payload generator).
 
@@ -23,12 +23,13 @@ This repository provides reusable Rust crates plus a small example extension.
 - Bincode codec with size limits.
 - Static registry for decoders/codecs/actions.
 - Known schema SQL functions (per-type decoding without envelope).
-- PG17-only helper for GUC limits and decoding (to be called from extension).
+- PG15/PG17 helper for GUC limits and decoding (to be called from extension).
+- Panic protection around decoding (catch_unwind in pgrx).
 
 ## Notes
 
 - `pg_debyte_ext` is only an example implementation; you will create your own extension crate.
-- PG15 support will be added later as a separate focus.
+- PG15/PG17 are supported via pgrx feature flags.
 
 ## Examples
 
@@ -49,14 +50,28 @@ cd my_pg_debyte_ext
 ```toml
 [dependencies]
 pgrx = { version = "0.16.1", default-features = false, features = ["pg17"] }
+# or: features = ["pg15"]
 pg_debyte_core = "0.2.0"
 pg_debyte_macros = "0.2.0"
-pg_debyte_pgrx = "0.2.0"
+pg_debyte_pgrx = { version = "0.2.0", default-features = false }
 serde = { version = "1.0", features = ["derive"] }
 uuid = "1.8"
 ```
 
-Build and install once:
+Enable the matching pg_debyte_pgrx feature:
+
+```toml
+[features]
+pg15 = ["pg_debyte_pgrx/pg15"]
+pg17 = ["pg_debyte_pgrx/pg17"]
+```
+
+Build and install once (choose your PG major, matching features):
+
+```bash
+cargo pgrx init --pg15 /path/to/pg15
+cargo pgrx install --features pg15 --sudo
+```
 
 ```bash
 cargo pgrx init --pg17 /path/to/pg17
@@ -267,9 +282,14 @@ cargo run -p pg_debyte_tools --bin demo_envelope
 SELECT bytea_to_json_auto(decode('<hex-encoded-envelope>', 'hex'));
 ```
 
-## Example usage (PG17)
+## Example usage (PG15/PG17)
 
-Build and install the example extension:
+Build and install the example extension (PG15/PG17):
+
+```bash
+cargo pgrx init --pg15 /path/to/pg15
+cargo pgrx install -p pg_debyte_ext --features pg15 --sudo
+```
 
 ```bash
 cargo pgrx init --pg17 /path/to/pg17
@@ -335,5 +355,6 @@ cargo run -p pg_debyte_tools --bin demo_auto_sql
 If host permissions make `cargo pgrx test` difficult, use the Docker runner:
 
 ```bash
-./scripts/docker-ci-test-pg-extension.sh
+source scripts/dev.sh
+docker_tests_pg_extensions pg17
 ```

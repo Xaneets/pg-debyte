@@ -8,12 +8,43 @@ jobs:
   pg-extension-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      matrix:
+        pg: [pg15, pg17]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build docker image
+        env:
+          BASE_IMAGE: ghcr.io/${{ github.repository_owner }}/pg-debyte-ci-base:latest
         run: ./scripts/docker-ci-build-image.sh
       - name: PGRX tests (pg_debyte_ext)
-        run: ./scripts/docker-ci-test-pg-extension.sh
+        run: bash -lc "source scripts/dev.sh; docker_tests_pg_extensions ${{ matrix.pg }}"
+
+  pgrx-workspace-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        pg: [pg15, pg17]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build docker image
+        env:
+          BASE_IMAGE: ghcr.io/${{ github.repository_owner }}/pg-debyte-ci-base:latest
+        run: ./scripts/docker-ci-build-image.sh
       - name: Workspace tests (include pg_debyte_pgrx)
-        run: docker run --rm -t pg-debyte-ci bash -lc "/usr/local/cargo/bin/cargo test --workspace --exclude pg_debyte_ext"
+        run: bash -lc "source scripts/dev.sh; docker_tests_workspace ${{ matrix.pg }}"

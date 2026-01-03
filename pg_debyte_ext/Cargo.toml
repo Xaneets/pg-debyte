@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 authors = ["Dmitriy Sergeev <xaneets@gmail.com>"]
-description = "Example pg_debyte PostgreSQL extension for PG17"
+description = "Example pg_debyte PostgreSQL extension for PG15/PG17"
 license = "Apache-2.0"
 readme = "../README.md"
-repository = "https://github.com/Xaneets/pg-debyte"
-homepage = "https://github.com/Xaneets/pg-debyte"
+repository = "https://github.com/xaneets/pg-debyte"
+homepage = "https://github.com/xaneets/pg-debyte"
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -18,12 +18,13 @@ name = "pgrx_embed_pg_debyte_ext"
 path = "./src/bin/pgrx_embed.rs"
 
 [features]
-pg17 = ["pgrx/pg17", "pgrx-tests/pg17"]
+pg15 = ["pgrx/pg15", "pgrx-tests/pg15", "pg_debyte_pgrx/pg15"]
+pg17 = ["pgrx/pg17", "pgrx-tests/pg17", "pg_debyte_pgrx/pg17"]
 pg_test = []
 
 [dependencies]
 pg_debyte_core = { version = "0.2.0", path = "../pg_debyte_core" }
-pg_debyte_pgrx = { version = "0.2.0", path = "../pg_debyte_pgrx" }
+pg_debyte_pgrx = { version = "0.2.0", path = "../pg_debyte_pgrx", default-features = false }
 pg_debyte_macros = { version = "0.2.0", path = "../pg_debyte_macros" }
 serde = { version = "1.0", features = ["derive"] }
 uuid = "1.8"

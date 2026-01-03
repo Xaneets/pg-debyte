@@ -30,6 +30,13 @@ This repository provides reusable Rust crates plus a small example extension.
 - `pg_debyte_ext` is only an example implementation; you will create your own extension crate.
 - PG15 support will be added later as a separate focus.
 
+## Examples
+
+The code blocks below are backed by real crates in `examples/`:
+- `examples/readme_known_schema`
+- `examples/readme_by_id`
+- `examples/readme_envelope`
+
 ## Quick start: build your own extension
 
 Common setup:
@@ -47,8 +54,6 @@ pg_debyte_macros = "0.2.0"
 pg_debyte_pgrx = "0.2.0"
 serde = { version = "1.0", features = ["derive"] }
 uuid = "1.8"
-bincode = "1.3"
-hex = "0.4"
 ```
 
 Build and install once:
@@ -86,7 +91,7 @@ struct MyRecord {
     label: String,
 }
 
-const MY_TYPE_ID: CoreUuid = CoreUuid::from_bytes([0x22; 16]);
+const MY_TYPE_ID: CoreUuid = CoreUuid::from_bytes([0x11; 16]);
 const MY_SCHEMA_VERSION: u16 = 1;
 const MY_CODEC_ID: u16 = 1;
 const MY_CODEC: BincodeCodec = BincodeCodec::new(MY_CODEC_ID, 32 * 1024 * 1024);
@@ -113,6 +118,11 @@ pub unsafe extern "C-unwind" fn _PG_init() {
 
 Usage:
 
+Generate a raw payload with the helper binary:
+
+```bash
+cargo run -p pg_debyte_tools --bin demo_payload
+```
 
 ```sql
 SELECT bytea_to_json_my_record(decode('<hex-encoded-payload>', 'hex'));
@@ -141,7 +151,7 @@ struct MyRecord {
     label: String,
 }
 
-const MY_TYPE_ID: CoreUuid = CoreUuid::from_bytes([0x22; 16]);
+const MY_TYPE_ID: CoreUuid = CoreUuid::from_bytes([0x11; 16]);
 const MY_SCHEMA_VERSION: u16 = 1;
 const MY_CODEC_ID: u16 = 1;
 const MY_CODEC: BincodeCodec = BincodeCodec::new(MY_CODEC_ID, 32 * 1024 * 1024);
@@ -177,7 +187,11 @@ fn bytea_to_json_by_id(
 }
 ```
 
-Usage (reuse `demo_payload.rs` from above):
+Usage (generate payload with the helper binary):
+
+```bash
+cargo run -p pg_debyte_tools --bin demo_payload
+```
 
 ```sql
 SELECT bytea_to_json_by_id(
@@ -241,48 +255,12 @@ fn bytea_to_json_auto(data: Vec<u8>) -> Result<JsonB, DecodeError> {
 }
 ```
 
-`src/bin/demo_envelope.rs` (example of wrapping your data with an envelope; prints hex-encoded payload):
-
-```rust
-use hex::encode;
-use pg_debyte_core::action::ActionSpec;
-use pg_debyte_core::codec::BincodeCodec;
-use pg_debyte_core::encode::encode_to_envelope;
-use pg_debyte_core::registry::StaticRegistry;
-use pg_debyte_core::types::{EncodeLimits, TypeKey};
-use serde::Serialize;
-use uuid::Uuid as CoreUuid;
-
-#[derive(Debug, Serialize)]
-struct MyRecord {
-    id: u32,
-    label: String,
-}
-
-fn main() {
-    let record = MyRecord {
-        id: 1,
-        label: "demo".to_string(),
-    };
-    let key = TypeKey {
-        type_id: CoreUuid::from_bytes([0x22; 16]),
-        schema_version: 1,
-    };
-    let codec = BincodeCodec::new(1, 32 * 1024 * 1024);
-    let limits = EncodeLimits::new(32 * 1024 * 1024);
-    let registry = StaticRegistry::new(&[], &[]);
-    let actions: Vec<ActionSpec> = Vec::new();
-
-    let envelope = encode_to_envelope(&record, &codec, key, &actions, &registry, &limits)
-        .expect("encode envelope");
-    println!("{}", encode(envelope));
-}
-```
-
 Usage:
 
+Generate an envelope with the helper binary (type_id 0x11, schema_version 1):
+
 ```bash
-cargo run --bin demo_envelope
+cargo run -p pg_debyte_tools --bin demo_envelope
 ```
 
 ```sql

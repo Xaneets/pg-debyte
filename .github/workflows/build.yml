@@ -13,3 +13,5 @@ jobs:
         run: ./scripts/docker-ci-build-image.sh
       - name: Build workspace packages
         run: ./scripts/docker-ci-build-workspace.sh
+      - name: Build README examples
+        run: ./scripts/docker-ci-build-examples.sh

@@ -1226,6 +1226,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "readme_by_id"
+version = "0.1.0"
+dependencies = [
+ "pg_debyte_core",
+ "pg_debyte_macros",
+ "pg_debyte_pgrx",
+ "pgrx",
+ "serde",
+ "uuid",
+]
+
+[[package]]
+name = "readme_envelope"
+version = "0.1.0"
+dependencies = [
+ "pg_debyte_core",
+ "pg_debyte_macros",
+ "pg_debyte_pgrx",
+ "pgrx",
+ "serde",
+ "uuid",
+]
+
+[[package]]
+name = "readme_known_schema"
+version = "0.1.0"
+dependencies = [
+ "pg_debyte_core",
+ "pg_debyte_macros",
+ "pg_debyte_pgrx",
+ "pgrx",
+ "serde",
+ "uuid",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.5.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -7,11 +7,22 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pg: [pg15, pg17]
     steps:
       - uses: actions/checkout@v4
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build docker image
+        env:
+          BASE_IMAGE: ghcr.io/${{ github.repository_owner }}/pg-debyte-ci-base:latest
         run: ./scripts/docker-ci-build-image.sh
       - name: Build workspace packages
-        run: ./scripts/docker-ci-build-workspace.sh
+        run: bash -lc "source scripts/dev.sh; docker_build_workspace ${{ matrix.pg }}"
       - name: Build README examples
-        run: ./scripts/docker-ci-build-examples.sh
+        run: bash -lc "source scripts/dev.sh; docker_build_examples ${{ matrix.pg }}"

@@ -5,6 +5,8 @@ use pg_debyte_core::registry::Registry;
 use pg_debyte_core::types::{DecodeLimits, TypeKey};
 use pg_debyte_core::DecoderEntry;
 use pgrx::guc::{GucContext, GucFlags, GucRegistry, GucSetting};
+use std::any::Any;
+use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::OnceLock;
 use uuid::Uuid;
 
@@ -74,19 +76,21 @@ pub fn decode_by_id(
     schema_version: i16,
     limits: &DecodeLimits,
 ) -> Result<serde_json::Value, DecodeError> {
-    ensure_limit("input_bytes", data.len(), limits.max_input_bytes)?;
-    let reg = registry()?;
-    let key = TypeKey {
-        type_id,
-        schema_version: schema_version as u16,
-    };
-    let entry = reg
-        .lookup_decoder(key)
-        .ok_or(DecodeError::UnknownType(key))?;
-    let payload = apply_actions_refs(reg, entry.default_actions(), data, limits)?;
-    let value = entry.decode_payload(&payload, limits)?;
-    ensure_json_limit(&value, limits)?;
-    Ok(value)
+    catch_unwind_decode(|| {
+        ensure_limit("input_bytes", data.len(), limits.max_input_bytes)?;
+        let reg = registry()?;
+        let key = TypeKey {
+            type_id,
+            schema_version: schema_version as u16,
+        };
+        let entry = reg
+            .lookup_decoder(key)
+            .ok_or(DecodeError::UnknownType(key))?;
+        let payload = apply_actions_refs(reg, entry.default_actions(), data, limits)?;
+        let value = entry.decode_payload(&payload, limits)?;
+        ensure_json_limit(&value, limits)?;
+        Ok(value)
+    })
 }
 
 pub fn decode_know_schema(
@@ -94,38 +98,42 @@ pub fn decode_know_schema(
     decoder: &dyn DecoderEntry,
     limits: &DecodeLimits,
 ) -> Result<serde_json::Value, DecodeError> {
-    ensure_limit("input_bytes", data.len(), limits.max_input_bytes)?;
-    let value = if decoder.default_actions().is_empty() {
-        decoder.decode_payload(data, limits)?
-    } else {
-        let reg = registry()?;
-        let payload = apply_actions_refs(reg, decoder.default_actions(), data, limits)?;
-        decoder.decode_payload(&payload, limits)?
-    };
-    ensure_json_limit(&value, limits)?;
-    Ok(value)
+    catch_unwind_decode(|| {
+        ensure_limit("input_bytes", data.len(), limits.max_input_bytes)?;
+        let value = if decoder.default_actions().is_empty() {
+            decoder.decode_payload(data, limits)?
+        } else {
+            let reg = registry()?;
+            let payload = apply_actions_refs(reg, decoder.default_actions(), data, limits)?;
+            decoder.decode_payload(&payload, limits)?
+        };
+        ensure_json_limit(&value, limits)?;
+        Ok(value)
+    })
 }
 
 pub fn decode_auto(data: &[u8], limits: &DecodeLimits) -> Result<serde_json::Value, DecodeError> {
-    ensure_limit("input_bytes", data.len(), limits.max_input_bytes)?;
-    let reg = registry()?;
-    let parsed = try_parse(data)?;
-    let envelope = match parsed {
-        ParsedEnvelope::None => return Err(DecodeError::BadEnvelope("no envelope")),
-        ParsedEnvelope::Envelope(view) => view,
-    };
+    catch_unwind_decode(|| {
+        ensure_limit("input_bytes", data.len(), limits.max_input_bytes)?;
+        let reg = registry()?;
+        let parsed = try_parse(data)?;
+        let envelope = match parsed {
+            ParsedEnvelope::None => return Err(DecodeError::BadEnvelope("no envelope")),
+            ParsedEnvelope::Envelope(view) => view,
+        };
 
-    let entry = reg
-        .lookup_decoder(envelope.key)
-        .ok_or(DecodeError::UnknownType(envelope.key))?;
-    if envelope.codec_id != entry.codec_id() {
-        return Err(DecodeError::UnknownCodec(envelope.codec_id));
-    }
+        let entry = reg
+            .lookup_decoder(envelope.key)
+            .ok_or(DecodeError::UnknownType(envelope.key))?;
+        if envelope.codec_id != entry.codec_id() {
+            return Err(DecodeError::UnknownCodec(envelope.codec_id));
+        }
 
-    let payload = apply_actions(reg, &envelope.actions, envelope.payload, limits)?;
-    let value = entry.decode_payload(&payload, limits)?;
-    ensure_json_limit(&value, limits)?;
-    Ok(value)
+        let payload = apply_actions(reg, &envelope.actions, envelope.payload, limits)?;
+        let value = entry.decode_payload(&payload, limits)?;
+        ensure_json_limit(&value, limits)?;
+        Ok(value)
+    })
 }
 
 fn apply_actions(
@@ -174,4 +182,38 @@ fn ensure_limit(context: &'static str, actual: usize, limit: usize) -> Result<()
 fn ensure_json_limit(value: &serde_json::Value, limits: &DecodeLimits) -> Result<(), DecodeError> {
     let json = serde_json::to_vec(value)?;
     ensure_limit("json_bytes", json.len(), limits.max_json_bytes)
+}
+
+fn catch_unwind_decode<F>(func: F) -> Result<serde_json::Value, DecodeError>
+where
+    F: FnOnce() -> Result<serde_json::Value, DecodeError>,
+{
+    match catch_unwind(AssertUnwindSafe(func)) {
+        Ok(result) => result,
+        Err(panic_err) => Err(DecodeError::Panic(panic_message(panic_err))),
+    }
+}
+
+fn panic_message(panic_err: Box<dyn Any + Send>) -> String {
+    if let Some(message) = panic_err.downcast_ref::<&str>() {
+        (*message).to_string()
+    } else if let Some(message) = panic_err.downcast_ref::<String>() {
+        message.clone()
+    } else {
+        "unknown panic error".to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn catch_unwind_maps_panic() {
+        let err = catch_unwind_decode(|| panic!("boom")).unwrap_err();
+        match err {
+            DecodeError::Panic(message) => assert!(message.contains("boom")),
+            other => panic!("unexpected error: {other:?}"),
+        }
+    }
 }

@@ -27,6 +27,8 @@ pub enum DecodeError {
     Json(String),
     #[error("io error: {0}")]
     Io(String),
+    #[error("panic during decode: {0}")]
+    Panic(String),
 }
 
 impl From<serde_json::Error> for DecodeError {

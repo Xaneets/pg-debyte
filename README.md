@@ -1,8 +1,8 @@
 # pg-debyte
 
-[![Build](https://github.com/xaneets/pg-debyte/actions/workflows/build.yml/badge.svg)](https://github.com/xaneets/pg-debyte/actions/workflows/build.yml)
-[![Workspace tests](https://github.com/xaneets/pg-debyte/actions/workflows/core-tests.yml/badge.svg)](https://github.com/xaneets/pg-debyte/actions/workflows/core-tests.yml)
-[![PG extension tests](https://github.com/xaneets/pg-debyte/actions/workflows/pg-extension-tests.yml/badge.svg)](https://github.com/xaneets/pg-debyte/actions/workflows/pg-extension-tests.yml)
+[![Build pg15/pg17](https://github.com/xaneets/pg-debyte/actions/workflows/build.yml/badge.svg?label=build%20pg15%2Fpg17)](https://github.com/xaneets/pg-debyte/actions/workflows/build.yml)
+[![Core tests](https://github.com/xaneets/pg-debyte/actions/workflows/core-tests.yml/badge.svg?label=core%20tests)](https://github.com/xaneets/pg-debyte/actions/workflows/core-tests.yml)
+[![PG extension tests pg15/pg17](https://github.com/xaneets/pg-debyte/actions/workflows/pg-extension-tests.yml/badge.svg?label=pg%20ext%20tests%20pg15%2Fpg17)](https://github.com/xaneets/pg-debyte/actions/workflows/pg-extension-tests.yml)
 [![Crates.io](https://img.shields.io/crates/v/pg_debyte_core.svg)](https://crates.io/crates/pg_debyte_core)
 
 Core building blocks for PostgreSQL extensions that decode `bytea` into JSON.

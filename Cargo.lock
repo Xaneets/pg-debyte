@@ -886,7 +886,7 @@ dependencies = [
 
 [[package]]
 name = "pg_debyte_core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bincode",
  "hex",
@@ -914,14 +914,14 @@ dependencies = [
 
 [[package]]
 name = "pg_debyte_macros"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "pg_debyte_core",
 ]
 
 [[package]]
 name = "pg_debyte_pgrx"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "pg_debyte_core",
  "pgrx",
@@ -1223,6 +1223,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "99d9a13982dcf210057a8a78572b2217b667c3beacbf3a0d8b454f6f82837d38"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "readme_by_id"
+version = "0.1.0"
+dependencies = [
+ "pg_debyte_core",
+ "pg_debyte_macros",
+ "pg_debyte_pgrx",
+ "pgrx",
+ "serde",
+ "uuid",
+]
+
+[[package]]
+name = "readme_envelope"
+version = "0.1.0"
+dependencies = [
+ "pg_debyte_core",
+ "pg_debyte_macros",
+ "pg_debyte_pgrx",
+ "pgrx",
+ "serde",
+ "uuid",
+]
+
+[[package]]
+name = "readme_known_schema"
+version = "0.1.0"
+dependencies = [
+ "pg_debyte_core",
+ "pg_debyte_macros",
+ "pg_debyte_pgrx",
+ "pgrx",
+ "serde",
+ "uuid",
 ]
 
 [[package]]

@@ -3,5 +3,8 @@ members = [
   "pg_debyte_core", "pg_debyte_ext",
   "pg_debyte_macros",
   "pg_debyte_pgrx", "pg_debyte_tools",
+  "examples/readme_known_schema",
+  "examples/readme_by_id",
+  "examples/readme_envelope",
 ]
 resolver = "2"
